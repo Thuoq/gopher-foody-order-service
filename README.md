@@ -72,3 +72,31 @@ Dự án áp dụng chặt chẽ nguyên tắc Clean Architecture, được phâ
 - Đăng nhập/Xác thực (SSO Use Case)
 - Lấy thông tin hồ sơ người dùng (Get Profile Handler)
 - Sẵn sàng tích hợp gRPC communication
+
+## 🗄️ Quản lý Database Migration
+
+Dự án sử dụng [golang-migrate](https://github.com/golang-migrate/migrate) thay vì GORM AutoMigrate để đảm bảo an toàn và tuân thủ chuẩn Production. Các file schema database được đặt ở thư mục root `migrations/`.
+
+### Luồng hoạt động (Up/Down)
+
+- Các file migration luôn đi theo cặp `.up.sql` và `.down.sql` tương ứng với mỗi thay đổi.
+- **Tự động chạy khi khởi động**: Nhờ tính năng `embed` của Go, thư mục `migrations` được biên dịch sẵn vào ứng dụng. Khi service khởi động và kết nối thành công tới PostgreSQL, ứng dụng sẽ tự động apply các file `.up.sql` mới nhất (nếu có).
+- **Tránh đụng độ**: `golang-migrate` sẽ tự động xử lý cơ chế locking database, giúp đảm bảo khi chạy trên microservice (với nhiều instance cùng bật lên) sẽ không bị lỗi race condition.
+
+### Cách tạo file Migration mới
+
+Khuyến khích cài đặt `golang-migrate` CLI trên máy cá nhân để dễ thao tác:
+
+```bash
+# Cài đặt qua Homebrew (trên macOS)
+brew install golang-migrate
+
+# Tạo cặp file up/down mới cho tính năng thêm số điện thoại
+migrate create -ext sql -dir migrations -seq add_phone_number
+```
+
+Lệnh trên sẽ sinh ra 2 file trong thư mục `migrations/`:
+- `000002_add_phone_number.up.sql`: Nơi bạn viết lệnh `ALTER TABLE users ADD COLUMN phone VARCHAR(20);`
+- `000002_add_phone_number.down.sql`: Nơi bạn viết lệnh `ALTER TABLE users DROP COLUMN phone;`
+
+Sau khi tạo xong file SQL, bạn chỉ cần chạy lại project (`go run cmd/server/main.go`), ứng dụng sẽ tự động cập nhật database cho bạn.

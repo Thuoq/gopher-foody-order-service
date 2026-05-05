@@ -1,11 +1,11 @@
 package http
 
 import (
+	"gopher-order-service/internal/config"
+	"gopher-order-service/internal/presentation/http/handlers/user"
+
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-
-	"gopher-identity-service/internal/config"
-	"gopher-identity-service/internal/presentation/http/handlers/user"
 )
 
 func NewRouter(cfg *config.Config, logger *zap.Logger, userRouter *user.Router) *gin.Engine {

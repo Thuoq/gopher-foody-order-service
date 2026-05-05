@@ -1,10 +1,10 @@
 package logger
 
 import (
+	"gopher-order-service/internal/config"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"gopher-identity-service/internal/config"
 )
 
 func NewLogger(cfg *config.Config) (*zap.Logger, error) {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	grpcRouter "gopher-order-service/internal/infrastructure/grpc"
 	"net"
 	"net/http"
 	"os"
@@ -15,14 +16,16 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"gopher-identity-service/internal/application/usecases"
-	"gopher-identity-service/internal/config"
-	"gopher-identity-service/internal/infrastructure/database"
-	"gopher-identity-service/internal/infrastructure/database/repositories"
-	grpcServer "gopher-identity-service/internal/presentation/grpc"
-	httpRouter "gopher-identity-service/internal/presentation/http"
-	"gopher-identity-service/internal/presentation/http/handlers/user"
-	"gopher-identity-service/pkg/logger"
+	"gopher-order-service/internal/application/usecases/order"
+	"gopher-order-service/internal/config"
+	"gopher-order-service/internal/core/ports"
+	"gopher-order-service/internal/infrastructure/database"
+	"gopher-order-service/internal/infrastructure/database/repositories"
+	"gopher-order-service/internal/infrastructure/http"
+
+	httpRouter "gopher-order-service/internal/presentation/http"
+	"gopher-order-service/internal/presentation/http/handlers/user"
+	"gopher-order-service/pkg/logger"
 )
 
 func BuildContainer() *dig.Container {
@@ -34,16 +37,18 @@ func BuildContainer() *dig.Container {
 
 	// Infrastructure
 	container.Provide(database.NewPostgresDB)
-	container.Provide(repositories.NewUserPostgresRepository)
+	container.Provide(repositories.NewOrderPostgresRepository)
+	container.Provide(func(cfg *config.Config) ports.RestaurantServiceClient {
+		return http.NewRestaurantHttpClient(cfg.App.RestaurantServiceUrl)
+	})
 
 	// Application
-	container.Provide(usecases.NewSSOUseCase)
+	container.Provide(order.NewCreateOrderUseCase)
 
 	// Presentation
-	container.Provide(user.NewGetProfileHandler)
+	container.Provide(user.NewOrderHandler)
 	container.Provide(user.NewRouter)
 	container.Provide(httpRouter.NewRouter)
-	container.Provide(grpcServer.NewGRPCServer)
 
 	return container
 }
@@ -51,7 +56,7 @@ func BuildContainer() *dig.Container {
 func main() {
 	container := BuildContainer()
 
-	err := container.Invoke(func(cfg *config.Config, log *zap.Logger, router *gin.Engine, grpcSrv *grpc.Server) {
+	err := container.Invoke(func(cfg *config.Config, log *zap.Logger, router *gin.Engine) {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
 
@@ -62,21 +67,9 @@ func main() {
 		}
 
 		go func() {
-			log.Info("Starting HTTP Server", zap.Int("port", cfg.App.HTTPPort))
+			log.Info("Starting Order HTTP Server", zap.Int("port", cfg.App.HTTPPort))
 			if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				log.Fatal("HTTP Server failed to start", zap.Error(err))
-			}
-		}()
-
-		// Start gRPC Server
-		go func() {
-			lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.App.GRPCPort))
-			if err != nil {
-				log.Fatal("Failed to listen for gRPC", zap.Error(err))
-			}
-			log.Info("Starting gRPC Server", zap.Int("port", cfg.App.GRPCPort))
-			if err := grpcSrv.Serve(lis); err != nil {
-				log.Fatal("gRPC Server failed to start", zap.Error(err))
 			}
 		}()
 
@@ -91,9 +84,7 @@ func main() {
 			log.Error("HTTP Server forced to shutdown", zap.Error(err))
 		}
 
-		grpcSrv.GracefulStop()
-
-		log.Info("Servers exited gracefully")
+		log.Info("Server exited gracefully")
 	})
 
 	if err != nil {

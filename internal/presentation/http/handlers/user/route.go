@@ -5,18 +5,18 @@ import (
 )
 
 type Router struct {
-	getProfileHandler *GetProfileHandler
+	orderHander *OrderHandler
 }
 
-func NewRouter(getProfileHandler *GetProfileHandler) *Router {
+func NewRouter(orderHander *OrderHandler) *Router {
 	return &Router{
-		getProfileHandler: getProfileHandler,
+		orderHander: orderHander,
 	}
 }
 
 func (r *Router) Register(api *gin.RouterGroup) {
 	userGroup := api.Group("/sso")
 	{
-		userGroup.GET("/profile/:id", r.getProfileHandler.Handle)
+		userGroup.POST("/orders", r.orderHander.CreateOrder)
 	}
 }

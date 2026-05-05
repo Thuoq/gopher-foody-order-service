@@ -13,9 +13,9 @@ type Config struct {
 type AppConfig struct {
 	Name      string `mapstructure:"app_name"`
 	Env       string `mapstructure:"app_env"`
-	HTTPPort  int    `mapstructure:"app_http_port"`
-	GRPCPort  int    `mapstructure:"app_grpc_port"`
-	SecretKey string `mapstructure:"app_secret_key"`
+	HTTPPort             int    `mapstructure:"app_http_port"`
+	SecretKey            string `mapstructure:"app_secret_key"`
+	RestaurantServiceUrl string `mapstructure:"restaurant_service_url"`
 }
 
 type DatabaseConfig struct {
@@ -42,10 +42,10 @@ func LoadConfig() (*Config, error) {
 	_ = viper.ReadInConfig() // Ignore error if .env file is missing, fallback to env vars
 
 	// Set defaults
-	viper.SetDefault("app_name", "gopher-identity-service")
+	viper.SetDefault("app_name", "gopher-foody-order-service")
 	viper.SetDefault("app_env", "development")
-	viper.SetDefault("app_http_port", 8080)
-	viper.SetDefault("app_grpc_port", 9090)
+	viper.SetDefault("app_http_port", 8082)
+	viper.SetDefault("restaurant_service_url", "http://localhost:8002")
 	viper.SetDefault("logger_level", "debug")
 
 	var cfg Config
