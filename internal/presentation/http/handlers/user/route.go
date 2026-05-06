@@ -15,7 +15,7 @@ func NewRouter(orderHander *OrderHandler) *Router {
 }
 
 func (r *Router) Register(api *gin.RouterGroup) {
-	userGroup := api.Group("/sso")
+	userGroup := api.Group("/")
 	{
 		userGroup.POST("/orders", r.orderHander.CreateOrder)
 	}
