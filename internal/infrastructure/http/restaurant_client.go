@@ -38,7 +38,7 @@ func (c *restaurantHttpClient) GetFoodsInfo(ctx context.Context, foodIDs []strin
 
 	// I'll implement it as a call to a hypothetical internal API: /internal/v1/foods/bulk
 	url := fmt.Sprintf("%s/internal/v1/foods/bulk", c.baseUrl)
-
+	fmt.Println(url)
 	// For simplicity in this demo/transition, I'll return an error or a mock if the API isn't there yet.
 	// But the structure should be correct.
 

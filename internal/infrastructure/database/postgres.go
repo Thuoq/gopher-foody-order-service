@@ -3,6 +3,7 @@ package database
 import (
 	"errors"
 	"fmt"
+	"gopher-order-service/internal/core/domain"
 	"gopher-order-service/migrations"
 
 	"gopher-order-service/internal/config"
@@ -27,6 +28,8 @@ func NewPostgresDB(cfg *config.Config, logger *zap.Logger) (*gorm.DB, error) {
 	logger.Info("Connecting to Postgres Database")
 
 	db, err := gorm.Open(gormpostgres.Open(dsn), &gorm.Config{})
+	db.Session(&gorm.Session{DryRun: true}).AutoMigrate(&domain.Order{}, &domain.OrderHistory{}, &domain.OrderItem{})
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}

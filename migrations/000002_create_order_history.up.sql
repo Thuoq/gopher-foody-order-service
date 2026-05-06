@@ -1,0 +1,2 @@
+CREATE TABLE "order_histories" ("id" bigserial,"order_id" bigint NOT NULL,"from_status" text,"to_status" text NOT NULL,"reason" text,"changed_by" text NOT NULL,"created_at" timestamptz,PRIMARY KEY ("id"),CONSTRAINT "fk_orders_history" FOREIGN KEY ("order_id") REFERENCES "orders"("id"));
+CREATE INDEX IF NOT EXISTS "idx_order_histories_order_id" ON "order_histories" ("order_id");

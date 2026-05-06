@@ -13,16 +13,16 @@ import (
 
 type OrderHandler struct {
 	createUC ports.ICreateOrderUseCase
-	detailUC ports.IGetOrderDetailUseCase
+	//detailUC ports.IGetOrderDetailUseCase
 }
 
 func NewOrderHandler(
 	createUC ports.ICreateOrderUseCase,
-	detailUC ports.IGetOrderDetailUseCase,
+// detailUC ports.IGetOrderDetailUseCase,
 ) *OrderHandler {
 	return &OrderHandler{
 		createUC: createUC,
-		detailUC: detailUC,
+		//detailUC: detailUC,
 	}
 }
 

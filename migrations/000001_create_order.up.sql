@@ -1,0 +1,4 @@
+CREATE TABLE "orders" ("id" bigserial,"public_id" text NOT NULL,"user_id" text NOT NULL,"restaurant_id" text NOT NULL,"status" varchar(20) DEFAULT 'pending',"total_price" decimal NOT NULL,"shipping_address" text NOT NULL,"payment_status" text DEFAULT 'unpaid',"payment_method" text,"note" text,"created_at" timestamptz,"updated_at" timestamptz,PRIMARY KEY ("id"),CONSTRAINT "uni_orders_public_id" UNIQUE ("public_id"));
+CREATE INDEX IF NOT EXISTS "idx_orders_restaurant_id" ON "orders" ("restaurant_id");
+CREATE INDEX IF NOT EXISTS "idx_orders_user_id" ON "orders" ("user_id");
+CREATE INDEX IF NOT EXISTS "idx_orders_public_id" ON "orders" ("public_id");

@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"gopher-order-service/internal/presentation/http/handlers/user"
+	"gopher-order-service/internal/core/ports"
+	externalHttp "gopher-order-service/internal/infrastructure/http"
 	"net/http"
 	"os"
 	"os/signal"
@@ -34,6 +35,9 @@ func BuildContainer() *dig.Container {
 	// Infrastructure
 	container.Provide(database.NewPostgresDB)
 	container.Provide(repositories.NewOrderPostgresRepository)
+	container.Provide(func(config *config.Config) (ports.RestaurantServiceClient, error) {
+		return externalHttp.NewRestaurantHttpClient(config.App.RestaurantServiceUrl), nil
+	})
 
 	// Application
 	container.Provide(order.NewCreateOrderUseCase)

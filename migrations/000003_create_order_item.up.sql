@@ -1,0 +1,2 @@
+CREATE TABLE "order_items" ("id" bigserial,"order_id" bigint NOT NULL,"food_id" text NOT NULL,"name" text NOT NULL,"price" decimal NOT NULL,"quantity" bigint NOT NULL,"subtotal" decimal NOT NULL,"created_at" timestamptz,PRIMARY KEY ("id"),CONSTRAINT "fk_orders_items" FOREIGN KEY ("order_id") REFERENCES "orders"("id"));
+CREATE INDEX IF NOT EXISTS "idx_order_items_order_id" ON "order_items" ("order_id");
