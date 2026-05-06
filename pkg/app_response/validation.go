@@ -1,4 +1,4 @@
-package response
+package app_response
 
 import (
 	"errors"

@@ -47,7 +47,7 @@ linters:
     # security & resources
     - gosec            # security scanner: SQL injection, hardcoded credentials, weak crypto, path traversal
     - bidichk          # dangerous bidirectional Unicode sequences (trojan source CVE-2021-42574)
-    - bodyclose        # unclosed HTTP response bodies (connection leaks)
+    - bodyclose        # unclosed HTTP app_response bodies (connection leaks)
     - noctx            # HTTP requests missing context.Context
     - containedctx     # context.Context stored in struct fields instead of passed as parameter
     - fatcontext       # context.WithValue/WithCancel in loops (unbounded context chain, memory leak)

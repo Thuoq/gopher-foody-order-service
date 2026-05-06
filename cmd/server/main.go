@@ -3,8 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	grpcRouter "gopher-order-service/internal/infrastructure/grpc"
-	"net"
+	"gopher-order-service/internal/presentation/http/handlers/user"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,17 +13,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/dig"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 
 	"gopher-order-service/internal/application/usecases/order"
 	"gopher-order-service/internal/config"
-	"gopher-order-service/internal/core/ports"
+
 	"gopher-order-service/internal/infrastructure/database"
 	"gopher-order-service/internal/infrastructure/database/repositories"
-	"gopher-order-service/internal/infrastructure/http"
-
-	httpRouter "gopher-order-service/internal/presentation/http"
-	"gopher-order-service/internal/presentation/http/handlers/user"
+	internalHttp "gopher-order-service/internal/presentation/http"
+	userInternalHttp "gopher-order-service/internal/presentation/http/handlers/user"
 	"gopher-order-service/pkg/logger"
 )
 
@@ -38,17 +34,14 @@ func BuildContainer() *dig.Container {
 	// Infrastructure
 	container.Provide(database.NewPostgresDB)
 	container.Provide(repositories.NewOrderPostgresRepository)
-	container.Provide(func(cfg *config.Config) ports.RestaurantServiceClient {
-		return http.NewRestaurantHttpClient(cfg.App.RestaurantServiceUrl)
-	})
 
 	// Application
 	container.Provide(order.NewCreateOrderUseCase)
-
+	// Handler
+	container.Provide(userInternalHttp.NewOrderHandler)
 	// Presentation
-	container.Provide(user.NewOrderHandler)
-	container.Provide(user.NewRouter)
-	container.Provide(httpRouter.NewRouter)
+	container.Provide(userInternalHttp.NewRouter)
+	container.Provide(internalHttp.NewRouter)
 
 	return container
 }
@@ -61,6 +54,7 @@ func main() {
 		defer stop()
 
 		// Start HTTP Server
+
 		httpServer := &http.Server{
 			Addr:    fmt.Sprintf(":%d", cfg.App.HTTPPort),
 			Handler: router,

@@ -5,7 +5,7 @@ import (
 	"gopher-order-service/internal/core/ports"
 	"gopher-order-service/internal/presentation/http/handlers/user/dto/request"
 	"gopher-order-service/internal/presentation/http/handlers/user/dto/response"
-	"gopher-order-service/pkg/http_response"
+	"gopher-order-service/pkg/app_response"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,14 +29,14 @@ func NewOrderHandler(
 func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	var req request.CreateOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fieldErrors := http_response.ParseValidationErrors(err)
-		http_response.ValidationError(c, http.StatusBadRequest, "invalid request body", fieldErrors)
+		fieldErrors := app_response.ParseValidationErrors(err)
+		app_response.ValidationError(c, http.StatusBadRequest, "invalid request body", fieldErrors)
 		return
 	}
 
 	userID := c.GetString("public_user_id")
 	if userID == "" {
-		http_response.Error(c, http.StatusUnauthorized, "missing user identity")
+		app_response.Error(c, http.StatusUnauthorized, "missing user identity")
 		return
 	}
 
@@ -58,11 +58,11 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 
 	order, err := h.createUC.Execute(c.Request.Context(), input)
 	if err != nil {
-		http_response.Error(c, http.StatusInternalServerError, err.Error())
+		app_response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	http_response.Success(c, http.StatusCreated, mapToOrderResponse(order))
+	app_response.Success(c, http.StatusCreated, mapToOrderResponse(order))
 }
 
 func mapToOrderResponse(o *domain.Order) response.OrderResponse {

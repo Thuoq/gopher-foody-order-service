@@ -201,7 +201,7 @@ func TestAuth_Metadata(t *testing.T) {
         t.Fatalf("expected success with valid token: %v", err)
     }
     if resp.User == nil {
-        t.Error("expected user in response")
+        t.Error("expected user in app_response")
     }
 }
 ```

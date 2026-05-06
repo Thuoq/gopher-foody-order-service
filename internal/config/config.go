@@ -11,13 +11,13 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Name      string `mapstructure:"app_name"`
-	Env       string `mapstructure:"app_env"`
+	Name                 string `mapstructure:"app_name"`
+	Env                  string `mapstructure:"app_env"`
 	HTTPPort             int    `mapstructure:"app_http_port"`
 	SecretKey            string `mapstructure:"app_secret_key"`
 	RestaurantServiceUrl string `mapstructure:"restaurant_service_url"`
 }
-
+ 
 type DatabaseConfig struct {
 	Host     string `mapstructure:"database_host"`
 	Port     int    `mapstructure:"database_port"`

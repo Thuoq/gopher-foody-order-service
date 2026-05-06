@@ -11,7 +11,7 @@ func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request) {
     order, err := h.orderService.Get(ctx, r.PathValue("id"))
     if err != nil {
         if ctx.Err() != nil {
-            // Client disconnected, no point writing a response
+            // Client disconnected, no point writing a app_response
             return
         }
         http.Error(w, "internal error", http.StatusInternalServerError)

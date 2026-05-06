@@ -205,7 +205,7 @@ Every package should have a doc comment. Place it in one of these locations:
 
 ```go
 // Package httputil provides HTTP utility functions for request parsing,
-// response writing, and middleware chaining.
+// app_response writing, and middleware chaining.
 //
 // It is designed to work with the standard net/http package and does not
 // depend on any specific HTTP framework.

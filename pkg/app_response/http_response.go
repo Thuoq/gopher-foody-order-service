@@ -1,4 +1,4 @@
-package response
+package app_response
 
 import "github.com/gin-gonic/gin"
 
@@ -9,7 +9,7 @@ type FieldError struct {
 	Param string `json:"param,omitempty"`
 }
 
-// Response represents a standard API response body
+// Response represents a standard API app_response body
 type Response struct {
 	Code    int          `json:"code"`
 	Message string       `json:"message"`
@@ -17,7 +17,7 @@ type Response struct {
 	Errors  []FieldError `json:"errors,omitempty"`
 }
 
-// Success writes a standard success response
+// Success writes a standard success app_response
 func Success(c *gin.Context, code int, data interface{}) {
 	c.JSON(code, Response{
 		Code:    code,
@@ -26,7 +26,7 @@ func Success(c *gin.Context, code int, data interface{}) {
 	})
 }
 
-// Error writes a standard error response
+// Error writes a standard error app_response
 func Error(c *gin.Context, code int, message string) {
 	c.JSON(code, Response{
 		Code:    code,
@@ -34,7 +34,7 @@ func Error(c *gin.Context, code int, message string) {
 	})
 }
 
-// ValidationError writes a standard validation error response with field details
+// ValidationError writes a standard validation error app_response with field details
 func ValidationError(c *gin.Context, code int, message string, errors []FieldError) {
 	c.JSON(code, Response{
 		Code:    code,

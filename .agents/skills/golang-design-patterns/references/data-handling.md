@@ -40,7 +40,7 @@ func AllUsers(db *sql.DB) iter.Seq2[User, error] {
 When transferring large data between services (e.g., 1M rows from DB, 1M rows in HTTP response), use streaming patterns with iterators or `github.com/samber/ro` to prevent OOM:
 
 ```go
-// Stream JSON array to HTTP response — constant memory
+// Stream JSON array to HTTP app_response — constant memory
 func (h *Handler) ExportUsers(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     w.Write([]byte("["))
