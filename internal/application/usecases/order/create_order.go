@@ -11,15 +11,18 @@ import (
 type createOrderUseCase struct {
 	orderRepo        ports.IOrderRepository
 	restaurantClient ports.RestaurantServiceClient
+	sagaOrchestrator ports.ISagaOrchestrator
 }
 
 func NewCreateOrderUseCase(
 	orderRepo ports.IOrderRepository,
 	restaurantClient ports.RestaurantServiceClient,
+	sagaOrchestrator ports.ISagaOrchestrator,
 ) ports.ICreateOrderUseCase {
 	return &createOrderUseCase{
 		orderRepo:        orderRepo,
 		restaurantClient: restaurantClient,
+		sagaOrchestrator: sagaOrchestrator,
 	}
 }
 
@@ -78,8 +81,11 @@ func (uc *createOrderUseCase) Execute(ctx context.Context, input ports.CreateOrd
 		},
 	}
 
-	// 4. Save to Repository (Transaction handled by Repo)
-	if err := uc.orderRepo.Create(ctx, order); err != nil {
+	// 4. Create the Saga Start Event
+	event := uc.sagaOrchestrator.CreateStartEvent(order)
+
+	// 5. Save to Repository (Transaction handled by Repo - Order + Outbox)
+	if err := uc.orderRepo.Create(ctx, order, event); err != nil {
 		return nil, err
 	}
 

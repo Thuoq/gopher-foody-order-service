@@ -6,9 +6,10 @@ import (
 )
 
 type IOrderRepository interface {
-	Create(ctx context.Context, order *domain.Order) error
+	Create(ctx context.Context, order *domain.Order, event *domain.SagaEvent) error
 	GetByPublicID(ctx context.Context, publicID string) (*domain.Order, error)
 	UpdateStatus(ctx context.Context, orderID uint, newStatus domain.OrderStatus, changedBy string, reason string) error
+	UpdateStatusByPublicID(ctx context.Context, publicID string, newStatus domain.OrderStatus, reason string) error
 	ListByUserID(ctx context.Context, userID string, page, limit int) ([]domain.Order, int64, error)
 }
 

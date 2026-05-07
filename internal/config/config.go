@@ -16,6 +16,7 @@ type AppConfig struct {
 	HTTPPort             int    `mapstructure:"app_http_port"`
 	SecretKey            string `mapstructure:"app_secret_key"`
 	RestaurantServiceUrl string `mapstructure:"restaurant_service_url"`
+	KafkaBrokers         string `mapstructure:"kafka_brokers"`
 }
  
 type DatabaseConfig struct {
@@ -46,6 +47,7 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("app_env", "development")
 	viper.SetDefault("app_http_port", 8082)
 	viper.SetDefault("restaurant_service_url", "http://localhost:8002")
+	viper.SetDefault("kafka_brokers", "localhost:9092")
 	viper.SetDefault("logger_level", "debug")
 
 	var cfg Config

@@ -4,6 +4,7 @@ import (
 	"context"
 	"gopher-order-service/internal/core/domain"
 	"gopher-order-service/internal/core/ports"
+	"encoding/json"
 
 	"gorm.io/gorm"
 )
@@ -18,14 +19,30 @@ func NewOrderPostgresRepository(db *gorm.DB) ports.IOrderRepository {
 	}
 }
 
-func (r *orderPostgresRepository) Create(ctx context.Context, order *domain.Order) error {
-	// GORM handles the transaction automatically if we pass the whole aggregate
-	// and have the correct foreign keys/associations set up.
-	// However, it's safer to be explicit in microservices.
+func (r *orderPostgresRepository) Create(ctx context.Context, order *domain.Order, event *domain.SagaEvent) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. Create Order
 		if err := tx.Create(order).Error; err != nil {
 			return err
 		}
+
+		// 2. Create Outbox Message
+		payload, err := json.Marshal(event)
+		if err != nil {
+			return err
+		}
+
+		outbox := &domain.OutboxMessage{
+			Topic:   event.EventType,
+			Key:     event.OrderID,
+			Payload: payload,
+			Status:  domain.OutboxStatusPending,
+		}
+
+		if err := tx.Create(outbox).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 }
@@ -75,6 +92,35 @@ func (r *orderPostgresRepository) UpdateStatus(ctx context.Context, orderID uint
 		return nil
 	})
 }
+
+func (r *orderPostgresRepository) UpdateStatusByPublicID(ctx context.Context, publicID string, newStatus domain.OrderStatus, reason string) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var order domain.Order
+		if err := tx.Where("public_id = ?", publicID).First(&order).Error; err != nil {
+			return err
+		}
+
+		// Update status
+		if err := tx.Model(&order).Update("status", newStatus).Error; err != nil {
+			return err
+		}
+
+		// Create history record
+		history := &domain.OrderHistory{
+			OrderID:    order.ID,
+			FromStatus: order.Status,
+			ToStatus:   newStatus,
+			Reason:     reason,
+			ChangedBy:  "system/saga",
+		}
+		if err := tx.Create(history).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 
 func (r *orderPostgresRepository) ListByUserID(ctx context.Context, userID string, page, limit int) ([]domain.Order, int64, error) {
 	var orders []domain.Order

@@ -23,6 +23,8 @@ import (
 	internalHttp "gopher-order-service/internal/presentation/http"
 	userInternalHttp "gopher-order-service/internal/presentation/http/handlers/user"
 	"gopher-order-service/pkg/logger"
+	"gopher-order-service/internal/application/saga"
+	"gopher-order-service/internal/infrastructure/messaging"
 )
 
 func BuildContainer() *dig.Container {
@@ -35,8 +37,27 @@ func BuildContainer() *dig.Container {
 	// Infrastructure
 	container.Provide(database.NewPostgresDB)
 	container.Provide(repositories.NewOrderPostgresRepository)
+	container.Provide(repositories.NewOutboxPostgresRepository)
 	container.Provide(func(config *config.Config) (ports.RestaurantServiceClient, error) {
 		return externalHttp.NewRestaurantHttpClient(config.App.RestaurantServiceUrl), nil
+	})
+	container.Provide(func(config *config.Config, log *zap.Logger) *messaging.KafkaPublisher {
+		return messaging.NewKafkaPublisher(config.App.KafkaBrokers, log)
+	})
+
+	// The Orchestrator will use the OutboxPublisher to be atomic
+	container.Provide(func(repo ports.IOutboxRepository) ports.IMessagePublisher {
+		return messaging.NewOutboxPublisher(repo)
+	})
+
+	container.Provide(saga.NewOrderCreationSaga)
+
+	container.Provide(func(cfg *config.Config, orch ports.ISagaOrchestrator, log *zap.Logger) *messaging.KafkaConsumer {
+		return messaging.NewKafkaConsumer(cfg.App.KafkaBrokers, orch, log)
+	})
+
+	container.Provide(func(repo ports.IOutboxRepository, kafkaPub *messaging.KafkaPublisher, log *zap.Logger) *messaging.OutboxProcessor {
+		return messaging.NewOutboxProcessor(repo, kafkaPub, log)
 	})
 
 	// Application
@@ -53,9 +74,21 @@ func BuildContainer() *dig.Container {
 func main() {
 	container := BuildContainer()
 
-	err := container.Invoke(func(cfg *config.Config, log *zap.Logger, router *gin.Engine) {
+	err := container.Invoke(func(
+		cfg *config.Config,
+		log *zap.Logger,
+		router *gin.Engine,
+		sagaWorker *messaging.KafkaConsumer,
+		outboxWorker *messaging.OutboxProcessor,
+	) {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
+
+		// Start Saga Background Worker
+		go sagaWorker.Start(ctx)
+
+		// Start Outbox Processor Worker
+		go outboxWorker.Start(ctx)
 
 		// Start HTTP Server
 
